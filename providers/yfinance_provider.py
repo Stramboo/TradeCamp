@@ -54,11 +54,54 @@ class YFinanceProvider(DataProvider):
 
         result = self._retry(_download)
         if result is None or result.empty:
+            logger.warning(f"获取 {ticker} 数据失败，尝试 ETF 代理...")
+            fallback_df = self._try_index_fallback(ticker, period)
+            if fallback_df is not None and not fallback_df.empty:
+                return fallback_df
             logger.warning(f"获取 {ticker} 数据失败，返回空 DataFrame")
             return pd.DataFrame()
 
         result = self._normalize_columns(result, ticker)
         logger.info(f"获取 {ticker} 数据成功: {len(result)} 条记录")
+        return result
+
+    # 指数 ticker → ETF 代理映射
+    # GitHub Actions 的 IP 段经常被 Yahoo Finance 限流
+    # 带 ^ 前缀的指数代码几乎拿不到数据，但同名 ETF 不会限流
+    _INDEX_FALLBACKS = {
+        "^IXIC": "QQQ",   # NASDAQ 综合指数 → 纳斯达克100 ETF
+        "^NDX":  "QQQ",   # NASDAQ-100     → 纳斯达克100 ETF
+        "^VIX":  "VIXY",  # VIX 恐慌指数   → VIX 短期期货 ETF
+    }
+
+    def _try_index_fallback(self, ticker, period):
+        """
+        当指数 ticker 数据获取失败时，使用关联 ETF 作为代理
+
+        参数:
+            ticker: 失败的指数 ticker，如 "^IXIC"
+            period: 数据周期
+
+        返回:
+            pd.DataFrame 或 None
+        """
+        proxy = self._INDEX_FALLBACKS.get(ticker)
+        if proxy is None:
+            return None
+        logger.warning(f"指数 {ticker} 拉取失败，fallback 到 {proxy}")
+
+        def _download_proxy():
+            return yf.download(
+                proxy, period=period, interval=HISTORY_INTERVAL,
+                auto_adjust=True, progress=False, repair=True
+            )
+
+        result = self._retry(_download_proxy)
+        if result is None or result.empty:
+            return None
+
+        result = self._normalize_columns(result, proxy)
+        logger.info(f"通过 ETF 代理 {proxy} 获取 {ticker} 数据成功: {len(result)} 条记录")
         return result
 
     def fetch_index_history(self, ticker, period=HISTORY_PERIOD):
