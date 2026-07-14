@@ -44,6 +44,16 @@ INDEX_TICKERS = {
     "vix": "^VIX",     # VIX 恐慌指数
 }
 
+# Yahoo Finance 指数 fallback（CI/限流环境使用 ETF 作为代理）
+# 在 CI 上 ^ 前缀指数经常返回空数据，启用 USE_ETF_PROXY 后
+# YFinanceProvider 会优先使用这里的 ETF，再 fallback 回 INDEX_TICKERS
+INDEX_ETF_PROXY = {
+    "ixic": "QQQ",     # 纳斯达克100 ETF（走势几乎一致）
+    "ndx":  "QQQ",     # 纳斯达克100 ETF
+    "vix":  "VIXY",    # VIX 短期期货 ETF
+}
+USE_ETF_PROXY = _get_env_flag("USE_ETF_PROXY", "false")  # CI 默认关闭，由代码自动启用
+
 # ============================================================
 # 推荐股票池（按板块分组）
 # ============================================================

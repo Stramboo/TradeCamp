@@ -28,6 +28,7 @@ env:
   ENABLE_COMPARISON: "true"        # 历史报告对比
   ENABLE_HK_A_SHARE: "false"       # 港股/A股数据（默认关闭）
   ENABLE_ML_PREDICT: "false"       # ML 价格预测（默认关闭）
+  USE_ETF_PROXY: "true"            # CI 环境直接用 ETF 代理（QQQ/VIXY），绕过 ^ 指数限流
   PYTHONUNBUFFERED: "1"            # 实时输出日志
   TZ: "Asia/Shanghai"              # 时区：北京时间
 
@@ -64,11 +65,6 @@ jobs:
       # Step 4: 运行分析脚本，生成 HTML 报告
       # ----------------------------------------------------------
       - name: 生成 NASDAQ 每日分析报告
-        # 在 CI 上 Yahoo Finance 经常对 ^ 前缀指数返回空数据
-        # 加 YF_USE_CRUMB / User-Agent 提高成功率
-        env:
-          YF_USE_CURL: "1"            # 强制使用 curl（绕过 Python requests 拦截）
-          REQUEST_INTERVAL: "2"       # 放慢请求节奏，避免触发 Yahoo 限流
         run: python nasdaq_analyzer.py
 
       # ----------------------------------------------------------
