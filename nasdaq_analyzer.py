@@ -261,15 +261,35 @@ def main():
         backtest_result = None
         if ENABLE_BACKTEST:
             try:
-                from backtest import BacktestEngine
                 logger.info("  [回测] 运行策略回测...")
-                engine = BacktestEngine()
-                backtest_result = engine.run(ixic_df)
-                if backtest_result:
-                    metrics = backtest_result.get("metrics", {})
-                    logger.info(f"  [回测] 总收益: {metrics.get('total_return', 0):.2f}% "
-                                f"夏普: {metrics.get('sharpe_ratio', 0):.2f} "
-                                f"胜率: {metrics.get('win_rate', 0):.1f}%")
+                from backtest.engine import BacktestEngine
+                from trading.strategy import create_strategy
+                # 用 IXIC 指数做主时钟，叠加几只核心个股作为可交易池
+                core_tickers = ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA"]
+                df_by_symbol = {"IXIC": ixic_df}
+                for tk in core_tickers:
+                    if tk in stocks_data and not stocks_data[tk].empty:
+                        df_by_symbol[tk] = stocks_data[tk]
+                strategy = create_strategy("multi")
+                engine = BacktestEngine(df_by_symbol=df_by_symbol, strategy=strategy)
+                bt_result = engine.run()
+                # 转成老格式，方便模板渲染
+                metrics_dict = bt_result.metrics.to_dict()
+                # 兼容旧模板字段名
+                metrics_dict["num_trades"] = metrics_dict.get("trade_count", 0)
+                metrics_dict["avg_holding_days"] = 0  # 新引擎暂未实现
+                metrics_dict["benchmark_return"] = 0  # 新引擎暂未实现
+                backtest_result = {
+                    "metrics": metrics_dict,
+                    "equity_curve": bt_result.portfolio.equity_curve,
+                    "trades": getattr(bt_result, "trades", []),
+                    "start_ts": str(bt_result.start_ts),
+                    "end_ts": str(bt_result.end_ts),
+                }
+                metrics = backtest_result["metrics"]
+                logger.info(f"  [回测] 总收益: {metrics.get('total_return', 0):.2f}% "
+                            f"夏普: {metrics.get('sharpe_ratio', 0):.2f} "
+                            f"胜率: {metrics.get('win_rate', 0):.1f}%")
             except Exception as e:
                 logger.warning(f"  [回测] 回测分析失败: {e}")
 
@@ -310,8 +330,14 @@ def main():
                 today = datetime.now().strftime("%Y-%m-%d")
                 prev_report = db_manager.get_previous_report(today)
                 if prev_report:
+                    # 注意：ixic_latest 还没定义（它在 Step 10 才赋值），
+                    # 这里改为用 ixic_df 最后一行直接提取 close
+                    try:
+                        _ixic_close = float(ixic_df["Close"].iloc[-1]) if not ixic_df.empty else 0
+                    except Exception:
+                        _ixic_close = 0
                     comparison_data = compare_with_previous({
-                        "ixic_close": ixic_latest["close"] if ixic_latest else 0,
+                        "ixic_close": _ixic_close,
                         "vix": vix_latest,
                         "breadth": breadth,
                         "trend": ixic_trend,

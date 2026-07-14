@@ -144,10 +144,28 @@ class ReportGenerator:
         if not equity_curve:
             return None
 
+        # 兼容两种 equity_curve 格式：
+        # 1. list[dict]（旧版本，含 date/equity/close 字段）
+        # 2. list[tuple[str, float]]（新 BacktestEngine 输出 (timestamp, equity)）
+        dates = []
+        equity_values = []
+        benchmark_values = []
+        for e in equity_curve:
+            if isinstance(e, tuple):
+                # 新格式：(timestamp, equity)
+                ts, eq = e
+                dates.append(str(ts))
+                equity_values.append(float(eq) if eq is not None else 0.0)
+                benchmark_values.append(0.0)  # 新格式无基准，填 0
+            elif isinstance(e, dict):
+                dates.append(e.get("date", ""))
+                equity_values.append(e.get("equity", 0))
+                benchmark_values.append(e.get("close", 0))
+
         return {
-            "dates": [e["date"] for e in equity_curve],
-            "equity": [e["equity"] for e in equity_curve],
-            "benchmark": [e["close"] for e in equity_curve],
+            "dates": dates,
+            "equity": equity_values,
+            "benchmark": benchmark_values,
             "metrics": backtest_result.get("metrics", {}),
             "trades": backtest_result.get("trades", []),
         }
