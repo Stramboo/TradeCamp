@@ -194,17 +194,22 @@ class YahooDirectProvider(DataProvider):
         # adjclose 优先（已调整除权除息），fallback 到 close
         closes = adjclose.get("adjclose") or quote.get("close") or []
 
+        # 用 DatetimeIndex（与 yfinance 输出兼容，方便后续 chart/strftime 调用）
+        date_index = pd.to_datetime(timestamps, unit="s", utc=True).tz_convert(None)
+
         df = pd.DataFrame({
             "Open":   quote.get("open",   [None] * len(timestamps)),
             "High":   quote.get("high",   [None] * len(timestamps)),
             "Low":    quote.get("low",    [None] * len(timestamps)),
             "Close":  closes,
             "Volume": quote.get("volume", [0]    * len(timestamps)),
-        }, index=pd.to_datetime(timestamps, unit="s", utc=True).tz_convert(None))
+        }, index=date_index)
 
-        # 去除全空行
-        df = df.dropna(subset=["Close"]).reset_index()
-        df.columns = ["Date", "Open", "High", "Low", "Close", "Volume"]
+        # 同时存一份"日期字符串"列，方便模板里直接用 {{ row.Date }}
+        df["Date"] = df.index.strftime("%Y-%m-%d")
+
+        # 去除全空行（保留 DatetimeIndex）
+        df = df.dropna(subset=["Close"])
 
         logger.info(f"获取 {ticker} 数据成功: {len(df)} 条记录")
         return df
