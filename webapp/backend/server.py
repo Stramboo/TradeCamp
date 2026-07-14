@@ -219,6 +219,25 @@ def get_ndx_status() -> dict:
     return asdict(state.ndx.get_status())
 
 
+@app.get("/api/analysis/full")
+def get_full_analysis() -> dict:
+    """完整分析数据（NDX + 关键股票 + 板块轮动 + 市场情绪）
+    给前端"分析"页面使用；失败时自动降级到 mock。"""
+    if state.ndx is None:
+        raise HTTPException(503, "ndx adapter not initialized")
+    result = state.ndx.get_full_analysis()
+    return {
+        "ndx": asdict(result.ndx),
+        "stocks": [asdict(s) for s in result.stocks],
+        "sectors": [asdict(s) for s in result.sectors],
+        "market_breadth": result.market_breadth,
+        "sentiment_data": result.sentiment_data,
+        "source": result.source,
+        "ts": result.ts,
+        "ndx_analysis_report_path": result.ndx_analysis_report_path,
+    }
+
+
 @app.get("/api/market/{symbol}")
 def get_market_quote(symbol: str) -> dict:
     sym = symbol.upper()

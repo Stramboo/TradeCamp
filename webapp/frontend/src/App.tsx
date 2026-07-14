@@ -5,6 +5,7 @@ import { useWS } from "./lib/ws";
 import { useBootstrapData } from "./lib/useBootstrapData";
 import { Dashboard } from "./routes/Dashboard";
 import { Trading } from "./routes/Trading";
+import { Analysis } from "./routes/Analysis";
 import { Strategy } from "./routes/Strategy";
 import { Logs } from "./routes/Logs";
 import { Settings } from "./routes/Settings";
@@ -21,6 +22,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/trading" element={<Trading />} />
+            <Route path="/analysis" element={<Analysis />} />
             <Route path="/strategy" element={<Strategy />} />
             <Route path="/logs" element={<Logs />} />
             <Route path="/settings" element={<Settings />} />

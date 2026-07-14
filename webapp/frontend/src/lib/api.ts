@@ -74,6 +74,67 @@ export type EquityPoint = {
   ts: number; equity: number; cash: number; market_value: number; daily_pnl: number;
 };
 
+// ---- 分析相关类型 ----
+export type NdxStatusData = {
+  symbol: string;
+  last_close: number;
+  change_pct: number;
+  ma50: number;
+  ma200: number;
+  above_ma200: boolean;
+  rsi14: number;
+  sentiment: "bull" | "bear" | "neutral";
+  sentiment_label: string;
+  summary: string;
+  source: string;
+  ts: number;
+  ndx_analysis_report_path: string;
+};
+
+export type StockAnalysisData = {
+  symbol: string;
+  name: string;
+  sector: string;
+  close: number;
+  change_pct: number;
+  ma5: number;
+  ma20: number;
+  ma60: number;
+  rsi14: number;
+  macd_signal: "bull" | "bear" | "neutral";
+  trend: string;
+  recommendation: string;
+};
+
+export type SectorAnalysisData = {
+  name: string;
+  etf: string;
+  close: number;
+  change_pct: number;
+  ma20: number;
+  rsi14: number;
+  rank: number;
+};
+
+export type FullAnalysisData = {
+  ndx: NdxStatusData;
+  stocks: StockAnalysisData[];
+  sectors: SectorAnalysisData[];
+  market_breadth: {
+    advancing: number; declining: number; total: number;
+    adv_volume: number; dec_volume: number;
+    new_highs: number; new_lows: number; breadth_ratio: number;
+  };
+  sentiment_data: {
+    vix: number; vix_change: number;
+    fear_greed_index: number; fear_greed_label: string;
+    put_call_ratio: number; summary: string;
+  };
+  source: string;
+  ts: number;
+  ndx_analysis_report_path: string;
+};
+
 // ---------- 接口 ----------
 
 export const api = {
@@ -88,6 +149,7 @@ export const api = {
   equity:        (limit = 300)      => http<EquityPoint[]>(`/api/equity-history?limit=${limit}`),
   strategy:      ()                 => http<{name:string; weights:Record<string,number>; available:string[]}>(`/api/strategy`),
   limits:        ()                 => http<Record<string, number | boolean | string>>(`/api/limits`),
+  fullAnalysis:  ()                 => http<FullAnalysisData>(`/api/analysis/full`),
   placeOrder:    (req: {symbol:string; side:"BUY"|"SELL"; quantity:number; order_type?:string; limit_price?:number|null}) =>
                    http<Order>(`/api/orders`, {
                      method: "POST",

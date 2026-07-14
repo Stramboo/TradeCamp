@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, TrendingUp, Brain, Terminal, Settings as Cog, Activity,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useTradeStore } from "../store/tradeStore";
@@ -8,6 +9,7 @@ import { useTradeStore } from "../store/tradeStore";
 const items = [
   { to: "/",          label: "总览",    icon: LayoutDashboard },
   { to: "/trading",   label: "交易",    icon: TrendingUp },
+  { to: "/analysis",  label: "分析",    icon: BarChart3 },
   { to: "/strategy",  label: "策略",    icon: Brain },
   { to: "/logs",      label: "日志",    icon: Terminal },
   { to: "/settings",  label: "设置",    icon: Cog },
