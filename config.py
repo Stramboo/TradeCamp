@@ -54,6 +54,11 @@ INDEX_ETF_PROXY = {
 }
 USE_ETF_PROXY = _get_env_flag("USE_ETF_PROXY", "false")  # CI 默认关闭，由代码自动启用
 
+# 是否使用 Yahoo Finance 直接 JSON API（彻底绕过 yfinance 库）
+# 在 CI 环境强烈建议开启：yfinance 在 GitHub Actions 的 IP 段经常失败
+# 而 query1.finance.yahoo.com/v8/finance/chart 这个端点直接调用通常成功
+USE_DIRECT_API = _get_env_flag("USE_DIRECT_API", "false")
+
 # ============================================================
 # 推荐股票池（按板块分组）
 # ============================================================

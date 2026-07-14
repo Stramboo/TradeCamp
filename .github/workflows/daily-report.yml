@@ -29,6 +29,7 @@ env:
   ENABLE_HK_A_SHARE: "false"       # 港股/A股数据（默认关闭）
   ENABLE_ML_PREDICT: "false"       # ML 价格预测（默认关闭）
   USE_ETF_PROXY: "true"            # CI 环境直接用 ETF 代理（QQQ/VIXY），绕过 ^ 指数限流
+  USE_DIRECT_API: "true"           # CI 环境直接调 Yahoo Finance JSON API，绕过 yfinance 库限制
   PYTHONUNBUFFERED: "1"            # 实时输出日志
   TZ: "Asia/Shanghai"              # 时区：北京时间
 

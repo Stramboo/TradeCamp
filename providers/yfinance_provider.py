@@ -12,9 +12,11 @@ import pandas as pd
 import logging
 
 from config import (
-    HISTORY_PERIOD, HISTORY_INTERVAL, SCREENER_TOP_N, USE_ETF_PROXY, INDEX_ETF_PROXY,
+    HISTORY_PERIOD, HISTORY_INTERVAL, SCREENER_TOP_N,
+    USE_ETF_PROXY, INDEX_ETF_PROXY, USE_DIRECT_API,
 )
 from providers.base import DataProvider
+from providers.yahoo_direct_provider import YahooDirectProvider
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,23 @@ class YFinanceProvider(DataProvider):
         返回:
             pd.DataFrame，含 Open、High、Low、Close、Volume 列
         """
+        # CI 环境（GitHub Actions）下 yfinance 经常失败
+        # 直接用 YahooDirectProvider（底层走 HTTP JSON API，不依赖 yfinance 库）
+        if USE_DIRECT_API:
+            logger.info(f"USE_DIRECT_API=True，使用 YahooDirectProvider 代替 yfinance")
+            direct = YahooDirectProvider()
+            df = direct.fetch_history(ticker, period)
+            if not df.empty:
+                return df
+            # 兜底：如果直连 API 也失败，指数走 ETF fallback
+            if ticker.startswith("^"):
+                fallback_df = self._try_index_fallback(ticker, period)
+                if fallback_df is not None and not fallback_df.empty:
+                    return fallback_df
+            logger.warning(f"获取 {ticker} 数据失败（直连 API），返回空 DataFrame")
+            return pd.DataFrame()
+
+        # 本地路径：使用 yfinance
         # 如果配置为使用 ETF 代理（CI 环境），直接走 ETF
         if USE_ETF_PROXY:
             etf_key = self._resolve_etf_key(ticker)
