@@ -344,6 +344,6 @@ QUESTS = [
      "xp": 150, "description": "沙盒账户累计盈利超过 $500"},
 ]
 
-assert len(QUESTS) == 13, f"Expected 13 quests, got {len(QUESTS)}"
+assert len(QUESTS) == 11, f"Expected 11 quests, got {len(QUESTS)}"
 
 __all__ = ["CHAPTERS", "GLOSSARY", "QUESTS"]

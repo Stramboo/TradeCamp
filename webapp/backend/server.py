@@ -562,12 +562,32 @@ def get_coach_ranking() -> dict:
 
 @app.get("/api/advisor/recommendations")
 async def get_advisor_recommendations() -> dict:
-    """生成 AI 推荐（复用引擎已缓存的历史数据，避免重复拉 yfinance）"""
+    """生成 AI 推荐（mock 模式用 MockEngine 数据，real 模式用 TradingEngine 数据）"""
     import concurrent.futures
     loop = asyncio.get_running_loop()
-    with concurrent.futures.ThreadPoolExecutor() as pool:
-        dr = await loop.run_in_executor(pool, generate_daily_recommendations_from_engine, state.engine)
-    return recommendations_to_dict(dr)
+
+    # mock 模式：MockEngine 没有 _engine.market_data，改用空结果
+    if state.backend_kind == "mock":
+        try:
+            from webapp.backend.ai_advisor import DailyRecommendations
+            dr = DailyRecommendations(
+                generated_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+                total_stocks=0,
+                strong_buy=[], buy=[], hold=[], sell=[], strong_sell=[],
+                top_picks=[], market_summary="Mock 模式下 AI 推荐暂不可用，请切换到真引擎模式。",
+                all_stocks=[],
+            )
+            return recommendations_to_dict(dr)
+        except Exception:
+            return {"total_stocks": 0, "market_summary": "推荐引擎暂不可用", "strong_buy": [], "buy": [], "hold": [], "sell": [], "strong_sell": [], "top_picks": [], "all": []}
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            dr = await loop.run_in_executor(pool, generate_daily_recommendations_from_engine, state.engine)
+        return recommendations_to_dict(dr)
+    except Exception as e:
+        logger.warning(f"AI 推荐生成失败: {e}")
+        return {"total_stocks": 0, "market_summary": f"推荐引擎出错: {e}", "strong_buy": [], "buy": [], "hold": [], "sell": [], "strong_sell": [], "top_picks": [], "all": []}
 
 
 # -- 自选列表 --
