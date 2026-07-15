@@ -300,15 +300,6 @@ def get_full_analysis() -> dict:
     }
 
 
-@app.get("/api/market/{symbol}")
-def get_market_quote(symbol: str) -> dict:
-    sym = symbol.upper()
-    if sym not in state.engine.prices:
-        raise HTTPException(404, f"unknown symbol: {sym}")
-    return {"symbol": sym, "price": state.engine.prices[sym],
-            "ts": int(time.time() * 1000)}
-
-
 @app.get("/api/market/batch")
 def get_market_batch(symbols: str = "") -> dict:
     """批量获取价格快照（学习沙盒用）"""
@@ -318,6 +309,15 @@ def get_market_batch(symbols: str = "") -> dict:
         if sym in state.engine.prices:
             prices[sym] = round(state.engine.prices[sym], 2)
     return {"prices": prices, "ts": int(time.time() * 1000)}
+
+
+@app.get("/api/market/{symbol}")
+def get_market_quote(symbol: str) -> dict:
+    sym = symbol.upper()
+    if sym not in state.engine.prices:
+        raise HTTPException(404, f"unknown symbol: {sym}")
+    return {"symbol": sym, "price": state.engine.prices[sym],
+            "ts": int(time.time() * 1000)}
 
 
 @app.get("/api/market/{symbol}/ohlc")
