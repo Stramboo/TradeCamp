@@ -198,7 +198,7 @@ TradeCamp/
 
 ### 路径注意事项
 
-- **两个 backtest.py**：根目录的 `backtest.py` 是报告系统嵌入式回测（旧），`backtest/engine.py` 是独立回测引擎（新），二者不冲突但也不使用对方代码。
+- **回测已统一**（v2.1）：`nasdaq_analyzer.py` 已迁移到 `backtest/engine.py`。根目录 `backtest.py` 保留为历史参考（无调用方），`backtest/legacy.py` 提供兼容包装。所有新回测走 `from backtest.engine import BacktestEngine`。固定测试数据在 `tests/fixtures/market_data/*.csv`，一致性测试在 `tests/test_backtest_consistency.py`。
 - **两个 config**：根目录的 `config.py`（报告系统配置，Python 常量）和 `config/default.yaml`（交易系统配置，YAML + 环境变量覆盖），互不冲突。
 - **两个数据库**：`data/nasdaq.db`（报告系统）和 `data/userdata.db`（WebApp 用户数据），独立管理。
 
