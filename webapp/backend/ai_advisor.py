@@ -404,6 +404,7 @@ def generate_daily_recommendations_from_engine(engine_adapter) -> DailyRecommend
     """
     从引擎已有的行情数据生成 AI 推荐（不额外拉 yfinance）
     引擎实盘模式已经在 market_data 里有缓存数据。
+    也支持 MockEngine —— 直接调用其 fetch_history 方法。
     """
     import sys, os
     _ROOT2 = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -419,14 +420,24 @@ def generate_daily_recommendations_from_engine(engine_adapter) -> DailyRecommend
         for s in syms:
             sector_map[s] = sector
 
-    # 从 engine 获取数据和报价
-    eng = engine_adapter._engine
-    prices = getattr(engine_adapter, "prices", {}) or {}
+    # 兼容 MockEngine 和 EngineAdapter
+    is_mock = not hasattr(engine_adapter, '_engine')
+    if is_mock:
+        eng_wrapper = engine_adapter  # MockEngine itself
+        prices = getattr(eng_wrapper, 'prices', {}) or {}
+    else:
+        eng_wrapper = engine_adapter._engine
+        prices = getattr(engine_adapter, "prices", {}) or {}
 
     results: list[StockRecommendation] = []
     for sym in all_symbols:
         try:
-            df = eng.market_data.fetch_history(sym, period="6mo")
+            if hasattr(eng_wrapper, 'market_data') and hasattr(eng_wrapper.market_data, 'fetch_history'):
+                df = eng_wrapper.market_data.fetch_history(sym, period="6mo")
+            elif hasattr(eng_wrapper, 'fetch_history'):
+                df = eng_wrapper.fetch_history(sym, period="6mo")
+            else:
+                df = None
         except Exception:
             df = None
 

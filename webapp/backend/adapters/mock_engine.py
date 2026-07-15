@@ -173,6 +173,30 @@ class MockEngine:
             for c in out
         ]
 
+    def fetch_history(self, symbol: str, period: str = "6mo", interval: str = "1d") -> "pd.DataFrame":
+        """返回历史数据 DataFrame（兼容 AI 推荐引擎调用）"""
+        import pandas as pd
+        from datetime import datetime, timedelta
+        if symbol not in self.prices:
+            return pd.DataFrame()
+        # 生成足够多的日线数据（~180 天）
+        n_days = 180
+        history = self.history.setdefault(symbol, [])
+        need = n_days - len(history)
+        if need > 0:
+            self._seed_history(symbol, limit=max(need, 200))
+        history = self.history[symbol]
+        # 取最近 n_days 条
+        data = history[-n_days:]
+        df = pd.DataFrame(data)
+        if df.empty:
+            return df
+        df = df.rename(columns={"open": "Open", "high": "High", "low": "Low", "close": "Close", "volume": "Volume"})
+        df["Date"] = pd.to_datetime(df["ts"], unit="s")
+        df = df.set_index("Date")
+        df = df[["Open", "High", "Low", "Close", "Volume"]]
+        return df
+
     def _seed_history(self, symbol: str, limit: int = 200) -> None:
         """生成 limit 根 1 分钟 K 线"""
         base = self.prices[symbol]
