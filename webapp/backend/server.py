@@ -28,6 +28,19 @@ import random
 import sys
 import time
 from contextlib import asynccontextmanager
+
+# --- 加载 .env 文件（不在版本控制中） ---
+_ENV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+if os.path.exists(_ENV_PATH):
+    with open(_ENV_PATH, "r", encoding="utf-8") as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _key, _val = _line.split("=", 1)
+                _key = _key.strip()
+                _val = _val.strip().strip('"').strip("'")
+                if _key and _key not in os.environ:
+                    os.environ[_key] = _val
 from dataclasses import asdict
 from typing import Any, Optional
 
