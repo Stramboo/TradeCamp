@@ -7,6 +7,9 @@
 <p align="center">
   从零开始学炒股的开源工具箱 —— 内置 8 章教程、AI 教练、模拟交易、每日大盘分析报告
 </p>
+<p align="center">
+  <sub>v2.1 · 89 项测试全绿 · 六层架构重构完成</sub>
+</p>
 
 <p align="center">
   <a href="#-快速开始">快速开始</a> ·
@@ -94,6 +97,8 @@ TradeCamp 引导你走过完整的四阶段学习路径：
 - **每日简报**：今天市场发生了什么，对你意味着什么
 - **持仓体检**：你手上股票有没有问题？
 - **风险预警**：仓位太重？止损太远？教练提醒你
+- **结构化评估**：**v2.1 新增** —— 四维评分系统（决策/执行/风险/归因），交易后自动给出 S~D 等级 + 亮点 + 改进点
+- **LLM 增强**：可选接入 DeepSeek，AI 用自然语言点评你的每笔交易
 
 ### 🏦 模拟券商
 
@@ -179,14 +184,14 @@ python trader.py
 ## 🧪 测试
 
 ```powershell
+# 全量测试（当前 89 passed，零失败）
+pytest tests/
+
 # 报告系统验证
 python nasdaq_analyzer.py          # 10 步全部成功即为正常
 
-# 交易系统单元测试
-pytest tests/                      # 7 个测试文件全部通过
-
-# 一键跑所有 Demo
-.\examples\run_all_demos.bat
+# E2E 流程测试（数据 → 买入 → 卖出 → 教练评估）
+pytest tests/test_e2e_smoke.py -v  # 10 项 API 级冒烟测试
 ```
 
 CI 自动跑在 `.github/workflows/smoke.yml`。

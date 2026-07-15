@@ -4,6 +4,17 @@
 
 ### 已实现功能
 
+#### 🏗️ V2.1 架构重构（2026-07-15 完成）
+
+| Goal | 内容 | 说明 |
+|------|------|------|
+| ✅ Goal 1 | 统一回测引擎 | 确定性回测 + 多标的 + 8 项一致性测试 |
+| ✅ Goal 2 | 统一市场数据服务 | MarketDataService + Mock/Yahoo Provider 抽象层 |
+| ✅ Goal 3 | 交易账本 | CashLedger 流水 + 持仓重建 + 资金对账 |
+| ✅ Goal 4 | 交易计划与复盘 | TradePlan API + 下单前计划弹窗 + 卖出后复盘 |
+| ✅ Goal 5 | AI 教练结构化反馈 | 四维评分（决策/执行/风险/归因）+ DeepSeek 增强 + CoachReview UI |
+| ✅ Goal 6 | 核心 E2E 与部署 | 10 项 API E2E + 路由修复 + RELEASE.md 发布清单 |
+
 #### 🅰️ 美股自动交易系统
 
 | 模块 | 状态 | 说明 |
@@ -47,19 +58,24 @@
 ### 当前稳定能力
 
 1. **每日自动报告**：两个渠道（GitHub Actions + SOLO Schedule）保证报告生成
-2. **桌面交易**：PyQt5 GUI 可手动/自动交易（模拟/Aplaca）
+2. **桌面交易**：PyQt5 GUI 可手动/自动交易（模拟/Alpaca）
 3. **Web 交易**：React 网页版可在浏览器中进行模拟交易
-4. **AI 教练**：每日简报 + 持仓体检 + 段位系统
+4. **AI 教练**：每日简报 + 持仓体检 + 四维结构化反馈（S~D 等级）
 5. **学习系统**：8 章入门课程 + 50+ 术语词典
+6. **交易纪律**：下单前计划 + 卖出后复盘 + AI 教练评分
 
 ---
 
 ## Current Phase
 
-### 正在解决的问题
+### v2.1 架构重构已全部完成 🎉
 
-- **CI 稳定性**：yfinance 在 GitHub Actions 环境中的网络兼容性问题（已通过 YahooDirectAPI + ETF Proxy 缓解）
-- **代码一致性**：报告系统的旧回测 (`backtest.py`) 与新回测引擎 (`backtest/engine.py`) 并存，需要统一
+六项 Goal 全部 merge 到 master，89 项测试全绿。核心改进：
+- 回测引擎统一为 `backtest/engine.py`（确定性、多标的、一致性验证）
+- 市场数据抽象层 `market_data/`（Mock/Yahoo 双 Provider）
+- 交易账本 CashLedger 实现资金全程可追溯
+- 交易纪律闭环：计划 → 执行 → 复盘 → AI 评分
+- 10 项 API 级端到端测试覆盖全流程
 
 ### 当前主要目标
 
@@ -71,8 +87,13 @@
 
 ### P0（必须）
 
-- [ ] 统一回测层：将报告系统的 `backtest.py`（根目录）迁移到使用 `backtest/engine.py`
-- [ ] 移除报告系统中与新引擎重复的代码
+- [x] 统一回测层：将报告系统的 `backtest.py`（根目录）迁移到使用 `backtest/engine.py` ✅ v2.1 Goal 1
+- [x] 移除报告系统中与新引擎重复的代码 ✅ v2.1 Goal 1
+- [x] 统一市场数据层 ✅ v2.1 Goal 2
+- [x] 建立交易账本（CashLedger）✅ v2.1 Goal 3
+- [x] 交易计划与复盘闭环 ✅ v2.1 Goal 4
+- [x] AI 教练结构化反馈 ✅ v2.1 Goal 5
+- [x] 核心 E2E 测试 ✅ v2.1 Goal 6
 
 ### P1（重要）
 
