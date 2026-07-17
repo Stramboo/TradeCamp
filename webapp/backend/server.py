@@ -70,6 +70,10 @@ from webapp.backend.review_engine import create_trade_review, MISTAKE_PATTERNS  
 from webapp.backend.coach_chat import chat as coach_chat  # noqa: E402
 from webapp.backend.daily_challenge import get_daily_challenge, CHALLENGE_POOL  # noqa: E402
 from webapp.backend.xp_service import award_xp, get_level_info  # noqa: E402
+from webapp.backend.review_service import auto_review_on_sell  # noqa: E402
+
+# v2.4 Phase 2: 复盘自动触发（纯本地规则引擎，默认开）
+ENABLE_REVIEW_AUTO = os.environ.get("ENABLE_REVIEW_AUTO", "true").lower() == "true"
 from webapp.backend.ai_coach import TradeCoach, enhance_with_llm  # noqa: E402
 
 # v2.3 Phase 1: 真实数据 Provider（可选）
@@ -1075,7 +1079,25 @@ def post_sandbox_order(req: SandboxOrderReq) -> dict:
         state.userstore.sandbox_buy(req.symbol.upper(), req.quantity, req.price, oid, ts)
     else:
         state.userstore.sandbox_sell(req.symbol.upper(), req.quantity, req.price, oid, ts)
-    return {"order_id": oid, "status": "filled", "ts": ts}
+
+    # 更新当日交易计数
+    try:
+        import datetime as _dt
+        state.userstore.checkin_touch(_dt.date.today().isoformat(), "trades_done", 1)
+    except Exception:
+        pass
+
+    # v2.4: SELL 后自动生成复盘
+    review = None
+    if ENABLE_REVIEW_AUTO and req.side == "SELL":
+        try:
+            review = auto_review_on_sell(
+                state.userstore, req.symbol.upper(), req.quantity, req.price, oid, ts
+            )
+        except Exception as e:
+            logger.warning(f"复盘自动生成失败: {e}")
+
+    return {"order_id": oid, "status": "filled", "ts": ts, "review": review}
 
 
 @app.get("/api/sandbox/orders")
@@ -1094,13 +1116,7 @@ def reset_sandbox() -> dict:
 @app.get("/api/reviews")
 def list_reviews(limit: int = 20) -> list[dict]:
     """获取交易复盘列表"""
-    # 从 userstore 获取复盘记录（如果没有则返回空列表）
-    try:
-        reviews = state.userstore.review_list(limit)
-        return reviews
-    except AttributeError:
-        # userstore 还没有 review_list 方法，返回空列表
-        return []
+    return state.userstore.review_list(limit)
 
 
 @app.post("/api/reviews/generate")

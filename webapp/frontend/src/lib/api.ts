@@ -214,7 +214,7 @@ export const api = {
   // ---- 沙盒交易 API (v2.3) ----
   sandboxAccount: () => http<{cash:number; initial_cash:number; positions:{symbol:string; quantity:number; avg_cost:number}[]}>(`/api/sandbox/account`),
   sandboxOrder: (req: {symbol:string; side:"BUY"|"SELL"; quantity:number; price:number}) =>
-                   http<{order_id:string; status:string; ts:number}>(`/api/sandbox/order`, { method: "POST", body: JSON.stringify(req) }),
+                   http<{order_id:string; status:string; ts:number; review?:any}>(`/api/sandbox/order`, { method: "POST", body: JSON.stringify(req) }),
   sandboxOrders: (limit = 50) => http<{order_id:string; symbol:string; side:string; quantity:number; price:number; ts:number}[]>(`/api/sandbox/orders?limit=${limit}`),
   sandboxReset: () => http<{ok:boolean}>(`/api/sandbox/reset`, { method: "POST" }),
 };

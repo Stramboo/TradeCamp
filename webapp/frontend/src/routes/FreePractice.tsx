@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { fmtMoney } from "../lib/utils";
 import { PortfolioAnalytics } from "../features/PortfolioAnalytics";
+import { ReviewToast } from "../features/ReviewToast";
 
 interface SandboxAccount {
   cash: number;
@@ -43,6 +44,7 @@ export function FreePractice() {
   const [orderType, setOrderType] = useState<"BUY" | "SELL">("BUY");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [review, setReview] = useState<any>(null);
 
   // 加载账户数据
   const loadAccount = useCallback(async () => {
@@ -106,13 +108,17 @@ export function FreePractice() {
     setMessage("");
 
     try {
-      await api.sandboxOrder({
+      const result = await api.sandboxOrder({
         symbol: selectedSymbol,
         side: orderType,
         quantity,
         price: quote.price,
       });
       setMessage(`${orderType === "BUY" ? "买入" : "卖出"} ${quantity} 股 ${selectedSymbol} 成功！`);
+      // v2.4: 卖出后展示复盘卡片
+      if (result?.review) {
+        setReview(result.review);
+      }
       await loadAccount();
       await loadOrders();
     } catch (e: any) {
@@ -389,6 +395,9 @@ export function FreePractice() {
           </button>
         </div>
       </div>
+
+      {/* 卖出复盘卡片 */}
+      {review && <ReviewToast review={review} onClose={() => setReview(null)} />}
     </div>
   );
 }
