@@ -5,6 +5,8 @@
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { LearningHeatmap } from "../features/LearningHeatmap";
+import { SandboxEquityCurve } from "../features/SandboxEquityCurve";
 import { Award, BookOpen, TrendingUp } from "lucide-react";
 
 interface Profile {
@@ -123,6 +125,10 @@ export function Me() {
           <p className="text-xs text-fg-muted">连续学习</p>
         </Link>
       </div>
+
+      {/* 数据可视化：热力图 + 净值曲线 */}
+      <LearningHeatmap />
+      <SandboxEquityCurve />
 
       {/* 成就 */}
       {p.achievements.length > 0 && (

@@ -1144,6 +1144,82 @@ def track_activity(req: dict) -> dict:
     return {"ok": True}
 
 
+# ---- 数据可视化 API (v2.4 Phase 4) ----
+
+@app.post("/api/sandbox/snapshot")
+def post_sandbox_snapshot(req: dict) -> dict:
+    """保存沙盒净值快照（前端节流调用）"""
+    try:
+        state.userstore.sandbox_snapshot_add(
+            ts=req.get("ts", int(time.time() * 1000)),
+            equity=req.get("equity", 0),
+            cash=req.get("cash", 0),
+            market_value=req.get("market_value", 0),
+        )
+    except Exception as e:
+        logger.warning(f"快照保存失败: {e}")
+    return {"ok": True}
+
+
+@app.get("/api/sandbox/equity-curve")
+def get_sandbox_equity_curve(limit: int = 500) -> list[dict]:
+    """获取沙盒净值曲线（持久化）"""
+    return state.userstore.sandbox_snapshots_list(limit)
+
+
+@app.get("/api/learning/heatmap")
+def get_learning_heatmap(days: int = 180) -> list[dict]:
+    """学习热力图数据（GitHub 风格）"""
+    checkins = state.userstore.checkin_list(days)
+    return [
+        {
+            "date": c["date"],
+            "xp": c["xp_earned"],
+            "lessons": c["lessons_done"],
+            "trades": c["trades_done"],
+            "level": (0 if c["xp_earned"] == 0
+                      else 1 if c["xp_earned"] < 30
+                      else 2 if c["xp_earned"] < 60
+                      else 3 if c["xp_earned"] < 100
+                      else 4),
+        }
+        for c in checkins
+    ]
+
+
+@app.get("/api/reviews/stats")
+def get_review_stats() -> dict:
+    """复盘统计：平均分/胜率/错误模式频率/评分趋势"""
+    reviews = state.userstore.review_list(100)
+    if not reviews:
+        return {"avg_score": 0, "total": 0, "win_rate": 0,
+                "mistake_freq": {}, "score_trend": []}
+
+    total = len(reviews)
+    avg_score = sum(r["score"] for r in reviews) / total
+    wins = sum(1 for r in reviews if r.get("pnl", 0) > 0)
+
+    mistake_freq: dict[str, int] = {}
+    for r in reviews:
+        for m in r.get("mistakes", []):
+            p = m.get("pattern", "")
+            mistake_freq[p] = mistake_freq.get(p, 0) + 1
+
+    # 评分趋势（按时间正序，取最近 20 条）
+    trend = [
+        {"date": r["created_at"], "score": r["score"]}
+        for r in reversed(reviews[-20:])
+    ]
+
+    return {
+        "avg_score": round(avg_score, 1),
+        "total": total,
+        "win_rate": round(wins / total * 100, 1),
+        "mistake_freq": mistake_freq,
+        "score_trend": trend,
+    }
+
+
 # ---- 沙盒交易 API ----
 
 @app.get("/api/sandbox/account")

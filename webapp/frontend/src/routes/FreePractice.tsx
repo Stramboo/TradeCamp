@@ -9,6 +9,7 @@ import { api } from "../lib/api";
 import { fmtMoney } from "../lib/utils";
 import { PortfolioAnalytics } from "../features/PortfolioAnalytics";
 import { ReviewToast } from "../features/ReviewToast";
+import { SandboxEquityCurve } from "../features/SandboxEquityCurve";
 
 interface SandboxAccount {
   cash: number;
@@ -121,6 +122,22 @@ export function FreePractice() {
       }
       await loadAccount();
       await loadOrders();
+      // v2.4: 保存净值快照（fire-and-forget）
+      const acc = await api.sandboxAccount();
+      const mv = acc.positions.reduce((s, p) => {
+        const q = quotes[p.symbol];
+        return s + (q?.price || p.avg_cost) * p.quantity;
+      }, 0);
+      fetch("/api/sandbox/snapshot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ts: Date.now(),
+          equity: acc.cash + mv,
+          cash: acc.cash,
+          market_value: mv,
+        }),
+      }).catch(() => {});
     } catch (e: any) {
       setMessage(`下单失败: ${e.message || "未知错误"}`);
     } finally {
@@ -151,6 +168,9 @@ export function FreePractice() {
           </p>
         </div>
       </div>
+
+      {/* 净值曲线 */}
+      <SandboxEquityCurve initialCash={account?.initial_cash || 100000} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 左侧：股票列表 */}

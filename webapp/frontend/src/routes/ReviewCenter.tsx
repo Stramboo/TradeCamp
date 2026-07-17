@@ -31,6 +31,7 @@ interface MistakePattern {
 export function ReviewCenter() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [patterns, setPatterns] = useState<Record<string, MistakePattern>>({});
+  const [stats, setStats] = useState<{ avg_score: number; win_rate: number; score_trend: { date: number; score: number }[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
 
@@ -38,9 +39,11 @@ export function ReviewCenter() {
     Promise.all([
       fetch("/api/reviews").then((r) => r.json()).catch(() => []),
       fetch("/api/reviews/patterns").then((r) => r.json()).catch(() => ({})),
-    ]).then(([revs, pats]) => {
+      fetch("/api/reviews/stats").then((r) => r.json()).catch(() => null),
+    ]).then(([revs, pats, sts]) => {
       setReviews(revs);
       setPatterns(pats);
+      setStats(sts);
       setLoading(false);
     });
   }, []);
@@ -90,7 +93,7 @@ export function ReviewCenter() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-4 gap-4">
         <div className="glass-card p-4 text-center">
           <p className="text-2xl font-bold text-fg">{reviews.length}</p>
           <p className="text-xs text-fg-dim mt-1">复盘交易数</p>
@@ -107,7 +110,32 @@ export function ReviewCenter() {
           </p>
           <p className="text-xs text-fg-dim mt-1">亏损交易</p>
         </div>
+        <div className="glass-card p-4 text-center">
+          <p className="text-2xl font-bold text-blue-400">
+            {stats ? `${stats.win_rate}%` : "—"}
+          </p>
+          <p className="text-xs text-fg-dim mt-1">胜率</p>
+        </div>
       </div>
+
+      {/* 评分趋势迷你图 */}
+      {stats && stats.score_trend.length >= 3 && (
+        <div className="glass-card p-4 space-y-2">
+          <p className="text-xs text-fg-muted uppercase tracking-wider">评分趋势</p>
+          <div className="flex items-end gap-1 h-16">
+            {stats.score_trend.map((t, i) => (
+              <div
+                key={i}
+                title={`${t.score} 分`}
+                className={`flex-1 rounded-t transition-all ${
+                  t.score >= 70 ? "bg-emerald-500/60" : t.score >= 50 ? "bg-amber-500/60" : "bg-rose-500/60"
+                }`}
+                style={{ height: `${Math.max(8, t.score)}%` }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 错误模式统计 */}
       {Object.keys(mistakeStats).length > 0 && (
