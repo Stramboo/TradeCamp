@@ -66,6 +66,7 @@ from webapp.backend.ai_advisor import generate_daily_recommendations_from_engine
 from webapp.backend.learning_content import STAGES, LESSONS, GLOSSARY, QUESTS  # noqa: E402
 from webapp.backend.explorer import MARKETS, COMPANIES, INDUSTRIES, get_market_status, get_companies  # noqa: E402
 from webapp.backend.practice import calc_position, calc_stop_loss, SCENARIOS, evaluate_scenario_decisions  # noqa: E402
+from webapp.backend.review_engine import create_trade_review, MISTAKE_PATTERNS  # noqa: E402
 from webapp.backend.ai_coach import TradeCoach, enhance_with_llm  # noqa: E402
 
 # v2.3 Phase 1: 真实数据 Provider（可选）
@@ -1028,6 +1029,48 @@ def get_sandbox_orders(limit: int = 50) -> list[dict]:
 def reset_sandbox() -> dict:
     state.userstore.sandbox_reset()
     return {"ok": True}
+
+
+# ---- 交易复盘 API (v2.3 Phase 3) ----
+
+@app.get("/api/reviews")
+def list_reviews(limit: int = 20) -> list[dict]:
+    """获取交易复盘列表"""
+    # 从 userstore 获取复盘记录（如果没有则返回空列表）
+    try:
+        reviews = state.userstore.review_list(limit)
+        return reviews
+    except AttributeError:
+        # userstore 还没有 review_list 方法，返回空列表
+        return []
+
+
+@app.post("/api/reviews/generate")
+def generate_review(req: dict) -> dict:
+    """为指定交易生成复盘报告"""
+    trade = req.get("trade", {})
+    context = req.get("context", {})
+    
+    # 添加上下文信息
+    context.setdefault("recent_trades", state.userstore.sandbox_orders_list(50))
+    context.setdefault("has_stop_loss", True)  # TODO: 从 trade_plan 检查
+    context.setdefault("has_journal", False)   # TODO: 从 journal 检查
+    
+    review = create_trade_review(trade, context)
+    
+    # 保存到 userstore（如果支持）
+    try:
+        state.userstore.review_save(review)
+    except AttributeError:
+        pass  # userstore 还没有 review_save 方法
+    
+    return review
+
+
+@app.get("/api/reviews/patterns")
+def list_mistake_patterns() -> dict:
+    """获取所有错误模式定义"""
+    return MISTAKE_PATTERNS
 
 
 # ---- 交易计划 ----
