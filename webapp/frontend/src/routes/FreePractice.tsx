@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { fmtMoney } from "../lib/utils";
+import { PortfolioAnalytics } from "../features/PortfolioAnalytics";
 
 interface SandboxAccount {
   cash: number;
@@ -330,34 +331,46 @@ export function FreePractice() {
           )}
         </div>
 
-        {/* 右侧：交易历史 */}
-        <div className="space-y-3">
-          <p className="text-xs text-fg-muted uppercase tracking-wider">最近交易</p>
-          <div className="rounded-xl bg-bg-panel border border-line overflow-hidden">
-            {orders.length === 0 ? (
-              <p className="p-4 text-xs text-fg-dim text-center">暂无交易记录</p>
-            ) : (
-              <div className="divide-y divide-line max-h-96 overflow-y-auto">
-                {orders.map((o) => (
-                  <div key={o.order_id} className="p-3 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className={`font-semibold ${o.side === "BUY" ? "text-emerald-400" : "text-rose-400"}`}>
-                        {o.side === "BUY" ? "买入" : "卖出"}
-                      </span>
-                      <span className="text-fg-dim">
-                        {new Date(o.ts).toLocaleTimeString()}
-                      </span>
+        {/* 右侧：交易历史 + 组合分析 */}
+        <div className="space-y-4">
+          {/* 组合分析 */}
+          {account && account.positions.length > 0 && (
+            <PortfolioAnalytics
+              positions={account.positions}
+              quotes={quotes}
+              cash={account.cash}
+            />
+          )}
+
+          {/* 交易历史 */}
+          <div className="space-y-3">
+            <p className="text-xs text-fg-muted uppercase tracking-wider">最近交易</p>
+            <div className="rounded-xl bg-bg-panel border border-line overflow-hidden">
+              {orders.length === 0 ? (
+                <p className="p-4 text-xs text-fg-dim text-center">暂无交易记录</p>
+              ) : (
+                <div className="divide-y divide-line max-h-96 overflow-y-auto">
+                  {orders.map((o) => (
+                    <div key={o.order_id} className="p-3 text-xs">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-semibold ${o.side === "BUY" ? "text-emerald-400" : "text-rose-400"}`}>
+                          {o.side === "BUY" ? "买入" : "卖出"}
+                        </span>
+                        <span className="text-fg-dim">
+                          {new Date(o.ts).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-fg">{o.symbol}</span>
+                        <span className="text-fg-muted">
+                          {o.quantity} 股 @ ${fmtMoney(o.price, 2)}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center justify-between mt-1">
-                      <span className="text-fg">{o.symbol}</span>
-                      <span className="text-fg-muted">
-                        {o.quantity} 股 @ ${fmtMoney(o.price, 2)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 重置按钮 */}
