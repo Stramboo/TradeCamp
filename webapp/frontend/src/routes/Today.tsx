@@ -10,7 +10,8 @@
  */
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { GraduationCap, Gamepad2, Globe } from "lucide-react";
+import { GraduationCap, Gamepad2, Globe, MessageCircle } from "lucide-react";
+import { CoachChat } from "../features/CoachChat";
 
 interface LearningState {
   level: number;
@@ -27,6 +28,7 @@ interface LearningState {
 export function Today() {
   const [state, setState] = useState<LearningState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showChat, setShowChat] = useState(false);
 
   useEffect(() => {
     fetch("/api/learning/chapters")
@@ -169,13 +171,27 @@ export function Today() {
       </div>
 
       {/* 教练提示 */}
-      <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-1">
-        <p className="text-xs text-blue-300 font-medium">💡 教练提示</p>
+      <div className="p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-blue-300 font-medium">💡 教练提示</p>
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="flex items-center gap-1 text-xs text-blue-300 hover:text-blue-200 transition"
+          >
+            <MessageCircle className="w-3 h-3" />
+            {showChat ? "收起" : "向教练提问"}
+          </button>
+        </div>
         <p className="text-xs text-fg-muted leading-relaxed">
           {isNew && "不用着急，慢慢来。每节课只有 5-10 分钟，学完一章再做练习。"}
           {isInProgress && "记住：理解比速度重要。如果你有疑问，可以随时查看术语表。"}
           {isDone && "你已经掌握基础知识了。试试模拟练习，把学到的用起来。"}
         </p>
+        {showChat && (
+          <div className="mt-3 pt-3 border-t border-blue-500/20">
+            <CoachChat onClose={() => setShowChat(false)} />
+          </div>
+        )}
       </div>
     </div>
   );

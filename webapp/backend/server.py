@@ -67,6 +67,7 @@ from webapp.backend.learning_content import STAGES, LESSONS, GLOSSARY, QUESTS  #
 from webapp.backend.explorer import MARKETS, COMPANIES, INDUSTRIES, get_market_status, get_companies  # noqa: E402
 from webapp.backend.practice import calc_position, calc_stop_loss, SCENARIOS, evaluate_scenario_decisions  # noqa: E402
 from webapp.backend.review_engine import create_trade_review, MISTAKE_PATTERNS  # noqa: E402
+from webapp.backend.coach_chat import chat as coach_chat  # noqa: E402
 from webapp.backend.ai_coach import TradeCoach, enhance_with_llm  # noqa: E402
 
 # v2.3 Phase 1: 真实数据 Provider（可选）
@@ -992,6 +993,35 @@ def coach_weekly_report() -> dict:
         report["tips"].append("卖出多于买入，检查一下是止盈还是恐慌卖出。")
 
     return report
+
+
+# ---- AI 教练对话 API (v2.3 Phase 4) ----
+
+class ChatReq(BaseModel):
+    message: str
+
+
+@app.post("/api/coach/chat")
+def coach_chat_api(req: ChatReq) -> dict:
+    """AI 教练对话"""
+    # 构建上下文
+    context = {
+        "glossary": GLOSSARY,
+        "trades": state.userstore.sandbox_orders_list(10),
+        "progress": {
+            "completed_lessons": len([p for p in state.userstore.learning_progress_list() if p.get("completed")]),
+            "total_lessons": 24,
+            "current_stage": 1,  # TODO: 从进度计算
+        },
+    }
+    
+    response = coach_chat(req.message, context)
+    
+    return {
+        "message": req.message,
+        "response": response,
+        "ts": int(time.time() * 1000),
+    }
 
 
 # ---- 沙盒交易 API ----
