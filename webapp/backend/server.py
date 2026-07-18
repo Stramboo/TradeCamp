@@ -80,6 +80,12 @@ from webapp.backend.historical_events import (  # noqa: E402
     get_historical_event, get_historical_event_full, list_historical_events,
     evaluate_historical_replay,
 )
+from webapp.backend.diagnosis_service import (  # noqa: E402
+    diagnose_ability, recommend_learning_path, predict_mistakes, DIMENSION_NAMES,
+)
+from webapp.backend.advanced_analysis import (  # noqa: E402
+    list_valuation_models, get_valuation_model, calculate_valuation, BACKTEST_TEACHING,
+)
 from webapp.backend.daily_challenge import get_daily_challenge, CHALLENGE_POOL  # noqa: E402
 from webapp.backend.xp_service import award_xp, get_level_info  # noqa: E402
 from webapp.backend.review_service import auto_review_on_sell  # noqa: E402
@@ -1662,6 +1668,61 @@ def submit_historical_replay_api(event_id: str, req: dict) -> dict:
 def historical_replay_progress() -> list[dict]:
     """获取历史回放进度"""
     return state.userstore.history_replay_list()
+
+
+# ---- 自适应学习 API (v2.5 Phase 2a) ----
+
+@app.get("/api/diagnosis/ability")
+def get_ability_diagnosis() -> dict:
+    """获取 6 维能力诊断"""
+    return diagnose_ability(state.userstore)
+
+
+@app.get("/api/diagnosis/recommendations")
+def get_learning_recommendations() -> list[dict]:
+    """获取个性化学习路径推荐"""
+    return recommend_learning_path(state.userstore)
+
+
+@app.get("/api/diagnosis/predictions")
+def get_mistake_predictions() -> list[dict]:
+    """获取「你可能犯的错误」预测"""
+    return predict_mistakes(state.userstore)
+
+
+@app.get("/api/diagnosis/dimensions")
+def get_dimension_names() -> dict:
+    """获取能力维度中文名映射"""
+    return DIMENSION_NAMES
+
+
+# ---- 高阶分析课程 API (v2.5 Phase 2b) ----
+
+@app.get("/api/analysis/valuation-models")
+def list_valuation_models_api() -> list[dict]:
+    """列出估值模型"""
+    return list_valuation_models()
+
+
+@app.get("/api/analysis/valuation-models/{model_id}")
+def get_valuation_model_api(model_id: str) -> dict:
+    """获取估值模型详情"""
+    m = get_valuation_model(model_id)
+    if not m:
+        raise HTTPException(404, "模型不存在")
+    return m
+
+
+@app.post("/api/analysis/valuation-models/{model_id}/calculate")
+def calculate_valuation_api(model_id: str, req: dict) -> dict:
+    """计算估值"""
+    return calculate_valuation(model_id, req.get("inputs", {}))
+
+
+@app.get("/api/analysis/backtest-teaching")
+def get_backtest_teaching() -> dict:
+    """获取回测教学版内容"""
+    return BACKTEST_TEACHING
 
 
 # ---- 沙盒交易 API ----
