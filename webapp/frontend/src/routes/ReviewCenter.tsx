@@ -93,7 +93,7 @@ export function ReviewCenter() {
       </div>
 
       {/* 统计卡片 */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="glass-card p-4 text-center">
           <p className="text-2xl font-bold text-fg">{reviews.length}</p>
           <p className="text-xs text-fg-dim mt-1">复盘交易数</p>

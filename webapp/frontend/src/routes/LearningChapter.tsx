@@ -111,7 +111,7 @@ export function LearningChapter() {
   return (
     <div className="flex gap-0 h-full" style={{ minHeight: "calc(100vh - 4rem - 2rem)" }}>
       {/* === Left: Content === */}
-      <div ref={scrollRef} className="flex-1 overflow-auto pr-8">
+      <div ref={scrollRef} className="flex-1 overflow-auto lg:pr-8">
         <button onClick={() => navigate("/learning")}
                 className="inline-flex items-center gap-1.5 text-xs text-fg-muted hover:text-fg mb-6">
           <ArrowLeft className="h-3.5 w-3.5" /> 学习路径
@@ -194,10 +194,40 @@ export function LearningChapter() {
             <span className="text-xs text-fg-dim">继续阅读以标记完成</span>
           )}
         </div>
+
+        {/* 移动端：课时测验直接显示在内容流中 */}
+        {lessonQuiz && lessonQuiz.length > 0 && (
+          <div className="lg:hidden pb-8">
+            <div className="glass-card p-5">
+              {!showQuiz ? (
+                <button
+                  onClick={() => setShowQuiz(true)}
+                  className="w-full flex items-center justify-between"
+                >
+                  <div className="text-left">
+                    <p className="text-sm font-semibold text-fg">📝 课时测验</p>
+                    <p className="text-xs text-fg-dim mt-0.5">{lessonQuiz.length} 道题 · 每题 10 XP</p>
+                  </div>
+                  <span className="glass-btn-primary px-4 py-2 rounded-[10px] text-xs font-semibold">
+                    开始测验
+                  </span>
+                </button>
+              ) : (
+                <QuizRunner
+                  title={lesson?.title || "课时测验"}
+                  questions={lessonQuiz}
+                  submitUrl={`/api/learning/quiz/${chapterId}/submit`}
+                  passScore={60}
+                  onClose={() => setShowQuiz(false)}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* === Right: Interactive === */}
-      <div className="w-[420px] shrink-0 border-l border-line pl-8">
+      {/* === Right: Interactive (桌面端) === */}
+      <div className="hidden lg:block w-[420px] shrink-0 border-l border-line pl-8">
         <h3 className="text-xs uppercase tracking-[0.15em] text-fg-dim mb-4">互动练习</h3>
 
         <div className="panel-card p-5">
@@ -332,9 +362,9 @@ export function LearningChapter() {
           )}
         </div>
 
-        {/* 课时测验 (v2.4) */}
+        {/* 课时测验 (v2.4, 桌面端) */}
         {lessonQuiz && lessonQuiz.length > 0 && (
-          <div className="mt-6 glass-card p-5">
+          <div className="mt-6 glass-card p-5 hidden lg:block">
             {!showQuiz ? (
               <button
                 onClick={() => setShowQuiz(true)}

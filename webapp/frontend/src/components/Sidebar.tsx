@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom";
 import {
-  Compass, GraduationCap, Globe, Gamepad2, User, Activity,
+  Activity,
   BookOpen, Sparkles, Settings,
 } from "lucide-react";
 import { cn } from "../lib/utils";
+import { primaryNavItems } from "./navItems";
 
 /**
  * Sidebar.tsx — Liquid Glass 浮动玻璃侧边栏
@@ -12,15 +13,10 @@ import { cn } from "../lib/utils";
  * - 浮动玻璃面板，与背景氛围光折射
  * - 大圆角 + 光谱高光边缘
  * - 选中态：翡翠玻璃胶囊
+ * - 移动端隐藏（由 MobileTabBar 替代）
  */
 
-const primaryItems = [
-  { to: "/today",     label: "今日",     icon: Compass },
-  { to: "/learning",  label: "学习",     icon: GraduationCap },
-  { to: "/explore",   label: "世界市场", icon: Globe },
-  { to: "/practice",  label: "模拟练习", icon: Gamepad2 },
-  { to: "/me",        label: "我的成长", icon: User },
-];
+const primaryItems = primaryNavItems;
 
 const toolItems = [
   { to: "/glossary", label: "术语表",  icon: BookOpen },
@@ -30,7 +26,7 @@ const toolItems = [
 
 export function Sidebar() {
   return (
-    <aside className="relative z-10 shrink-0 p-3 pr-0 flex flex-col">
+    <aside className="relative z-10 shrink-0 p-3 pr-0 hidden lg:flex flex-col">
       {/* 浮动玻璃面板 */}
       <div className="glass specular-edge rounded-[22px] w-56 flex-1 flex flex-col overflow-hidden">
         {/* Logo */}

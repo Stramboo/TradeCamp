@@ -1,6 +1,7 @@
 import { Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Sidebar } from "./components/Sidebar";
+import { MobileTabBar } from "./components/MobileTabBar";
 import { Header } from "./components/Header";
 import { useWS } from "./lib/ws";
 import { useBootstrapData } from "./lib/useBootstrapData";
@@ -62,7 +63,7 @@ function AppContent() {
       <Sidebar />
       <div className="relative z-10 flex flex-col flex-1 overflow-hidden">
         <Header />
-        <main className="flex-1 overflow-auto px-4 pb-4 lg:px-6 lg:pb-6 xl:px-8 xl:pb-8">
+        <main className="flex-1 overflow-auto px-4 pb-24 lg:pb-8 lg:px-6 xl:px-8">
           <Routes>
             {/* v2.2 新首页与教学入口 */}
             <Route path="/" element={<Navigate to="/today" replace />} />
@@ -98,6 +99,7 @@ function AppContent() {
           </Routes>
         </main>
       </div>
+      <MobileTabBar />
     </div>
   );
 }
