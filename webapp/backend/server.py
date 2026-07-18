@@ -1427,6 +1427,21 @@ def list_certificates() -> list[dict]:
     ]
 
 
+# ---- 用户偏好 API (v2.4 Phase 9) ----
+
+@app.put("/api/prefs/{key}")
+def set_pref(key: str, req: dict) -> dict:
+    """保存用户偏好（onboarding 目标/经验等）"""
+    state.userstore.pref_set(key, req.get("value"))
+    return {"ok": True}
+
+
+@app.get("/api/prefs/{key}")
+def get_pref(key: str) -> dict:
+    """读取用户偏好"""
+    return {"key": key, "value": state.userstore.pref_get(key)}
+
+
 # ---- 沙盒交易 API ----
 
 @app.get("/api/sandbox/account")
